@@ -13,6 +13,7 @@ wire [7:0] resp;
 
 wire [15:0] d_ptch, d_roll, d_yaw;
 wire [8:0] thrst;
+wire [7:0] uw_resp;
 
 //commMaster
 reg snd_cmd;
@@ -22,6 +23,8 @@ wire [15:0] wrapper_data_out;
 
 wire TX_RX, RX_TX;
 
+wire resp_sent;
+
 reg equal_to_zero;
 
 localparam REQ_BATT = 8'h01;
@@ -29,36 +32,48 @@ localparam SET_PTCH = 8'h02;
 localparam SET_ROLL = 8'h03;
 localparam SET_YAW = 8'h04;
 localparam SET_THRST = 8'h05;
-localparam EMER_LAND = 8'h06;
+localparam EMER_LAND = 8'h08;
 localparam MTRS_OFF = 8'h07;
-localparam CALIBRATE = 8'h08;
+localparam CALIBRATE = 8'h06;
 
 localparam POS_ACK = 8'hA5;
 
 
+//Initialize CommMaster Block
+CommMaster commMaster(.clk(clk), .rst_n(rst_n), .resp_rdy(resp_rdy), .resp(resp), .data(data), .snd_cmd(snd_cmd), .cmd(cmd), .TX(TX_RX), .RX(RX_TX) );
 
-CommMaster commMaster(.clk(clk), .rst_n(rst_n), .resp_rdy(resp_rdy),.resp(resp), .data(data), .snd_cmd(snd_cmd), .cmd(cmd), .TX(TX_RX), .RX(RX_TX) );
+//Initialize UART_wrapper block
+UART_wrapper wrapper( .clk(clk), .rst_n(rst_n), .cmd_rdy(cmd_rdy), .snd_resp(send_resp),
+	.resp_sent(resp_sent), .clr_cmd_rdy(clr_cmd_rdy), .cmd(cmd), .data(wrapper_data_out), .resp(uw_resp) , .TX(RX_TX), .RX(TX_RX));
 
-UART_wrapper wrapper( .clk(clk), .rst_n(rst_n), .cmd_rdy(cmd_rdy), .send_resp(send_resp),
-	.resp_sent(resp_sent), .clr_cmd_rdy(clr_cmd_rdy), .cmd(cmd), .data(wrapper_data_out), .resp(resp), .RX(TX_RX), .TX(RX_TX) );
-
+//Initialize cmd_cfg block
 cmd_cfg commandconfig( .clk(clk), .rst_n(rst_n), .cmd_rdy(cmd_rdy), .snd_rsp(send_resp),
-	 .clr_cmd_rdy(clr_cmd_rdy), .cmd(cmd), .data(wrapper_data_out), .resp(resp), .d_ptch(d_ptch), .d_roll(d_roll),.d_yaw( d_yaw), .thrst(thrst), .batt(batt), .strt_cal(strt_cal), .inertial_cal(inertial_cal),
+	 .clr_cmd_rdy(clr_cmd_rdy), .cmd(cmd), .data(wrapper_data_out), .resp(uw_resp), .d_ptch(d_ptch), .d_roll(d_roll), .d_yaw(d_yaw), .thrst(thrst), .batt(batt), .strt_cal(strt_cal), .inertial_cal(inertial_cal),
 	 .cal_done(cal_done), .motors_off(motors_off), .strt_cnv(strt_cnv), .cnv_cmplt(cnv_cmplt) );
 
+//Initializing signals
 initial begin
+        equal_to_zero = 0;
 	clk = 0;
 	rst_n = 0;
 	#1 rst_n = 1;
 
-//SENDING BATTERY CMD
+///////////////////////
+//SENDING BATTERY CMD//
+///////////////////////
 	cmd = REQ_BATT;
-	data = 16'hxxxx;
+	data = 16'h0000;
 	batt = 8'h48; //arbitrary battery value
+	@(posedge clk);
 	snd_cmd = 1;
 	@(posedge clk) snd_cmd = 0;
-	
-	@(posedge resp_rdy)
+
+
+	@(posedge strt_cnv);
+           cnv_cmplt = 1;
+
+	//Once response is ready, check the response value, and check the result of the command we sent
+	@(posedge resp_rdy);
 	if( resp == 8'h48 ) begin
 		$display("Battery CMD successful.");
 	end
@@ -67,7 +82,9 @@ initial begin
 		$stop();
 	end
 
-//SENDING SET PTCH CMD
+////////////////////////
+//SENDING SET PTCH CMD//
+////////////////////////
 	cmd = SET_PTCH;
 	data = 16'h4321;
 	
@@ -75,6 +92,7 @@ initial begin
 	snd_cmd = 1;
 	@(posedge clk) snd_cmd = 0;
 	
+	//Once response is ready, check the response value, and check the result of the command we sent
 	@(posedge resp_rdy)
 	if( resp == POS_ACK ) begin
 		if( d_ptch == 16'h4321 ) begin
@@ -90,15 +108,17 @@ initial begin
 		$stop();
 	end
 
-//SENDING SET ROLL CMD
-
+////////////////////////
+//SENDING SET ROLL CMD//
+////////////////////////
 	cmd = SET_ROLL;
 	data = 16'h6543;
 	
 	//sending and resetting command
 	snd_cmd = 1;
 	@(posedge clk) snd_cmd = 0;
-	
+
+	//Once response is ready, check the response value, and check the result of the command we sent
 	@(posedge resp_rdy)
 	if( resp == POS_ACK ) begin
 		if( d_roll == 16'h6543 ) begin
@@ -113,8 +133,10 @@ initial begin
 		$display("ERROR: Response incorrect. EXPECTED: 8'hA5 (POS_ACK). ACTUAL: %h.", resp);
 		$stop();
 	end
-//SENDING SET YAW CMD
 
+///////////////////////
+//SENDING SET YAW CMD//
+///////////////////////
 	cmd = SET_YAW;
 	data = 16'h9876;
 	
@@ -122,6 +144,7 @@ initial begin
 	snd_cmd = 1;
 	@(posedge clk) snd_cmd = 0;
 	
+	//Once response is ready, check the response value, and check the result of the command we sent
 	@(posedge resp_rdy)
 	if( resp == POS_ACK ) begin
 		if( d_yaw == 16'h9876 ) begin
@@ -136,8 +159,10 @@ initial begin
 		$display("ERROR: Response incorrect. EXPECTED: 8'hA5 (POS_ACK). ACTUAL: %h.", resp);
 		$stop();
 	end
-//SENDING SET THRST CMD
 
+/////////////////////////
+//SENDING SET THRST CMD//
+/////////////////////////
 	cmd = SET_THRST;
 	data = 16'h0013;
 	
@@ -145,6 +170,7 @@ initial begin
 	snd_cmd = 1;
 	@(posedge clk) snd_cmd = 0;
 	
+	//Once response is ready, check the response value, and check the result of the command we sent
 	@(posedge resp_rdy)
 	if( resp == POS_ACK ) begin
 		if( thrst == 9'h013 ) begin
@@ -160,8 +186,9 @@ initial begin
 		$stop();
 	end
 
-//SENDING EMERGENCY LAND CMD
-
+//////////////////////////////
+//SENDING EMERGENCY LAND CMD//
+//////////////////////////////
 	cmd = EMER_LAND;
 	data = 16'h0013;
 	
@@ -169,8 +196,10 @@ initial begin
 	snd_cmd = 1;
 	@(posedge clk) snd_cmd = 0;
 	
+	//for the Emergency land: thrst, ptch, roll, and yaw should all be set to 0
 	assign equal_to_zero = ((thrst == 0) && (d_ptch == 0) && (d_roll == 0) && (d_yaw == 0));
 	
+	//Once response is ready, check the response value, and check the result of the command we sent
 	@(posedge resp_rdy)
 	if( resp == POS_ACK ) begin
 		if( equal_to_zero ) begin
@@ -186,8 +215,9 @@ initial begin
 		$stop();
 	end
 
-//SENDING MOTORS OFF CMD
-
+//////////////////////////
+//SENDING MOTORS OFF CMD//
+//////////////////////////
 	cmd = MTRS_OFF;
 	data = 16'h5252;
 	
@@ -195,6 +225,7 @@ initial begin
 	snd_cmd = 1;
 	@(posedge clk) snd_cmd = 0;
 	
+	//Once response is ready, check the response value, and check the result of the command we sent
 	@(posedge resp_rdy)
 	if( resp == POS_ACK ) begin
 		if( motors_off ) begin
@@ -210,8 +241,9 @@ initial begin
 		$stop();
 	end
 
-//SENDING CALIBRATE CMD
-
+/////////////////////////
+//SENDING CALIBRATE CMD//
+/////////////////////////
 	cmd = CALIBRATE;
 	data = 16'h8789;
 	
@@ -223,14 +255,19 @@ initial begin
 
 	@(posedge strt_cal) $display("Start Cal.");
 
-	while(strt_cal) begin
+        /*while(strt_cal) begin
 		if(!inertial_cal) begin
 			$display( "Inertial_cal not asserted during strt_cal." );
 		end
-	end
+        end */	
 		
-	@(posedge cal_done) $display( "Cal_done asserted.");
+	@(posedge clk); 
+          cal_done = 1;
 
+        @(posedge clk);
+         // cal_done = 0;
+          
+	//Once response is ready, check the response value, and check the result of the command we sent
 	@(posedge resp_rdy)
 	if( resp == POS_ACK ) begin
 		if( cal_done ) begin
@@ -246,12 +283,16 @@ initial begin
 		$stop();
 	end
 
+	$stop();
+
 end
 
-
-//Toggling clock
+//////////////////
+//Toggling clock//
+//////////////////
 always begin
 	#5 clk = ~clk;
 end
 
 endmodule
+

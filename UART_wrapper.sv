@@ -4,16 +4,18 @@
 */
 module UART_wrapper(clk,
                     rst_n, 
-                    send_resp, 
+                    snd_resp, 
                     resp, 
                     clr_cmd_rdy, 
                     cmd_rdy, 
                     resp_sent, 
                     cmd, 
-                    data);
+                    data,
+		    RX,
+		    TX);
 
 input clk, rst_n;		
-input send_resp;
+input snd_resp;
 input [7:0] resp;
 input clr_cmd_rdy;
 
@@ -23,12 +25,18 @@ output logic [15:0] data;
 output logic [7:0] cmd;    
 
 // UART inputs
-logic RX, trmt;		        // strt_tx tells TX section to transmit tx_data
+input logic RX;
+logic trmt;
+//logic RX, trmt;		        // strt_tx tells TX section to transmit tx_data
+
 logic clr_rx_rdy;		// rx_rdy can be cleared by this or new start bit
 logic [7:0] tx_data;		// byte to transmit .. same as resp[7:0]
 
 // UART outputs
-logic TX, rx_rdy;         	// rx_rdy asserted when byte received,
+output logic TX;
+logic rx_rdy;
+
+//logic TX, rx_rdy;         	// rx_rdy asserted when byte received,
 logic tx_done;                  // tx_done asserted when tranmission complete
 logic [7:0] rx_data;		// byte received
 
@@ -46,16 +54,16 @@ UART iUART(.clk(clk),
            .rx_rdy(rx_rdy),
            .clr_rx_rdy(clr_rx_rdy),
            .rx_data(rx_data),
-           .trmt(trmt),
-           .tx_data(tx_data),
-           .tx_done(tx_done));
+           .trmt(snd_resp),
+           .tx_data(resp),
+           .tx_done(resp_sent));
 
 
 /////////////////////////////
 // Continuous assignement //
 ///////////////////////////
-assign trmt = send_resp;
-assign resp_sent = tx_done;
+//assign trmt = snd_resp;
+//assign resp_sent = tx_done;
 assign data[7:0] = rx_data;
 
 

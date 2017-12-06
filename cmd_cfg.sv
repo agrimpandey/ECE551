@@ -1,6 +1,6 @@
 /**
-@author: agrim pandey
-@partners: doug, ethan, sneha
+@author: Agrim Pandey
+@partners: Doug Neu, Ethan Link, Sneha Patri
 */
 
 module cmd_cfg(clk, 
@@ -22,7 +22,6 @@ module cmd_cfg(clk,
                inertial_cal,
                motors_off, 
                strt_cnv);
-
 
 input clk; 
 input rst_n;
@@ -55,9 +54,19 @@ logic wthrst;
 logic clr_tmr,emergency;
 logic tmr_full;
 
+parameter WIDTH = 9;
 
-timer_module iDUTtimer(.clk(clk), .rst_n(rst_n), .clr_tmr(clr_tmr), .tmr_full(tmr_full));
+//Creating localparams for the commands for readability purposes
+localparam REQ_BATT = 8'h01;
+localparam SET_PTCH = 8'h02;
+localparam SET_ROLL = 8'h03;
+localparam SET_YAW = 8'h04;
+localparam SET_THRST = 8'h05;
+localparam EMER_LAND = 8'h08;
+localparam MTRS_OFF = 8'h07;
+localparam CALIBRATE = 8'h06;
 
+timer_module #(WIDTH) iDUTtimer(.clk(clk), .rst_n(rst_n), .clr_tmr(clr_tmr), .tmr_full(tmr_full));
 
 //////////////////////////////
 // d_ptch output logic     //
@@ -89,6 +98,12 @@ always_ff @(posedge clk, negedge rst_n) begin
     d_yaw <= data;
 end
 
+always_ff @(posedge clk, negedge rst_n) begin
+  if(!rst_n)
+    thrst <= 16'b0;
+  else if(wthrst)
+    thrst <= data;
+end
 
 //////////////////////////////
 // motors_off output logic //
@@ -102,8 +117,17 @@ always_ff @(posedge clk, negedge rst_n) begin
     motors_off <= 1'b0;
 end
 
-typedef enum reg [3:0] {REQ_BATT, MTRS_OFF, EMER_LAN, SET_THRST, SET_YAW, SET_ROLL, SET_PTCH, CALIBRATE} cmd_t;
-cmd_t cmd; 
+//////////////////////////////
+//emergency///////////////////
+//////////////////////////////
+always_ff @(posedge clk, negedge rst_n) begin
+  if(emergency) begin
+    d_ptch <= 1'b0;
+    d_roll <= 1'b0;
+    d_yaw <= 1'b0;
+    thrst <= 1'b0;
+  end
+end
 
 typedef enum reg [3:0] {IDLE, SEND_ACK, BATT, CAL1, CAL2} state_t;
 state_t state, nxt_state;
@@ -132,9 +156,12 @@ always_comb begin
  resp = 0;
  strt_cal = 0;
 
+ //////////////////
+ //STATE MACHINE///
+ //////////////////
  case (state)
 
-    IDLE:begin
+    IDLE:begin //The idle state deals with handling the commands
 
       nxt_state = IDLE;
        
@@ -142,7 +169,7 @@ always_comb begin
 
             clr_cmd_rdy = 1;
 
-             case(cmd) 
+             case(cmd) //separate case statement to model behavior based on command
 
                 SET_PTCH: begin
                    wptch = 1;
@@ -164,7 +191,7 @@ always_comb begin
                    nxt_state = SEND_ACK;
                 end
 
-                EMER_LAN: begin
+                EMER_LAND: begin
                    emergency = 1;
                    nxt_state = SEND_ACK;
                 end
@@ -175,6 +202,7 @@ always_comb begin
                 end
 
                 REQ_BATT: begin 
+                   strt_cnv = 1; 
                    nxt_state = BATT;
                 end
           
@@ -186,34 +214,54 @@ always_comb begin
             endcase
         end
     end
-
+	
+	///////////////////////////////////////////////////////////
+	//The other states deal with which response to send back///
+	///////////////////////////////////////////////////////////
+	
+	//In the battery state, we want to send the battery voltage back as the response
+	// and go back to IDLE.
     BATT: begin
        if(cnv_cmplt) begin
           resp = batt[7:0];
           snd_rsp = 1;
+	  nxt_state = IDLE;
        end
        else
           nxt_state = BATT;
     end
 
+	//CAL1 and CAL2 are the calibration states
     CAL1: begin
        if(tmr_full) begin
          strt_cal = 1;
          inertial_cal = 1;
          nxt_state = CAL2;
        end
-       else
+       else begin
+         inertial_cal = 1;
          nxt_state = CAL1;
+	end
     end
 
     CAL2: begin
        if(cal_done) begin
-         nxt_state = SEND_ACK;
+         nxt_state = IDLE;
+         inertial_cal = 1;
+         snd_rsp = 1;
+         resp = 8'hA5;
        end
        else begin
          inertial_cal = 1;
-         nxt_state = SEND_ACK;
+         nxt_state = CAL2;
        end
+    end
+
+	//The send ack state handles all the commands where we want to send 8'hA5 back as the response
+    SEND_ACK: begin
+	resp = 8'hA5;
+	snd_rsp=1;
+	nxt_state = IDLE;
     end
   
   default: nxt_state = IDLE;
