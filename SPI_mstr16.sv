@@ -1,165 +1,206 @@
-module SPI_mstr16(clk, rst_n, wrt, cmd, done, rd_data, SS_n, SCLK, MOSI, MISO);
+module SPI_mstr16(clk, rst_n, cmd, wrt, MISO, MOSI, SS_n, SCLK, done, rd_data);
 
-// declarations
-input [15:0] cmd;
-input MISO;
-input clk, rst_n, wrt;
+input clk, rst_n;
+input wrt;                    // to signal the start from idle state 
+input [15:0] cmd;             // Data (command) being sent to inertial sensor or A2D converter
+input MISO;                   // master in slave out .. sampled on rising edge
 
-output reg SS_n, SCLK, MOSI;
-output reg done;
-output reg [15:0] rd_data;
+output logic SS_n;            // active low slave select
+output logic SCLK;            // serial clock
+output logic MOSI;            // changes on the falling edge of SCLK
+output logic done;            // asserted when transition from back porch to idle
+output logic [15:0] rd_data;  // data read
 
-reg [4:0] sclk_div;
-reg [15:0] shft_reg;
-reg [4:0] bit_cnt;
-reg MISO_smpl;
-reg rst_cnt;
-reg smpl, shft;
+// SM outputs
+logic rst_cnt;                
+logic smpl;                   
+logic shft;                   
+logic set_done; 
+logic clr_done;
+logic set_SS_n;
+logic clr_SS_n;
+logic clr_bit_cnt;
 
-reg set_ss_n, clr_ss_n, clr_done, set_done;
+logic MISO_smpl;              // to sample MISO synchronously
 
-// State machine implementation
-typedef enum reg [3:0] {IDLE, FRONT_PORCH, BACK_PORCH, BITS} state_t;
-state_t state, next_state;
+logic [4:0] sclk_div;         // five bit clock counter
+logic [4:0] bit_cnt;          // 16 bit counter
+logic [15:0] shft_reg;        // shift register
 
-// SCLK based on the most sig bit
-assign SCLK = sclk_div[4];
-assign rd_data = shft_reg;
-assign MOSI = shft_reg[15];
+// SM STATES
+typedef enum reg [1:0] {IDLE, FRONT_PORCH, BITS, BACK_PORCH} state_t;
+state_t next_state; 
+state_t curr_state;
 
-//bit count for number of shifts
+
+/////////////////////////////
+// Continuous assignement //
+///////////////////////////
+assign SCLK = sclk_div[4];    // MSB of sclk_div
+assign MOSI = shft_reg[15];   // MSB of shft_reg
+assign rd_data = shft_reg;    // data read
+
+/////////////////////////
+// Infer bit_cnt next //
+///////////////////////
 always @(posedge clk, negedge rst_n) begin
-   if(!rst_n)
-       bit_cnt <= 5'h0;
-   else if(rst_cnt) 
-       bit_cnt <= 5'h0;
-   else if(shft)
-       bit_cnt <= bit_cnt + 1;
+  if(!rst_n)
+    bit_cnt = 5'b0;
+  else if(clr_bit_cnt)
+    bit_cnt = 5'b0;
+  else if(shft)
+    bit_cnt = bit_cnt + 1;
 end
 
-// Assign MISO_smpl
-always @(posedge clk, negedge rst_n) begin
-   if (smpl)
-      MISO_smpl = MISO;
+/////////////////////////
+// Infer sclk_div     //
+///////////////////////
+always_ff @(posedge clk, negedge rst_n) begin 
+  if(!rst_n)
+    sclk_div = 5'b0;
+  else if(rst_cnt)    // synch reset
+    sclk_div = 5'b10111;
+  else
+    sclk_div = sclk_div + 1;
 end
 
-// counter for sclk
-always @(posedge clk, negedge rst_n) begin
-   if(!rst_n)
-      sclk_div <= 5'b00000;
-   else if (rst_cnt)
-      sclk_div <= 5'b10111;
-   else 
-      sclk_div <= sclk_div + 1;
-end
-
-// 16 bit shift register
-always @(posedge clk, negedge rst_n) begin
-   if(!rst_n)
-      shft_reg <= 16'h0000;
-   else if (wrt)
-      shft_reg <= cmd;
-   else if (shft)
-      shft_reg <= {shft_reg[14:0], MISO_smpl};
-end
-
-// done
+////////////////////////////
+// Infer state flop next //
+//////////////////////////
 always_ff @(posedge clk, negedge rst_n) begin
-   if(!rst_n)
-      done <= 0;
-   else if (set_done)
-      done <= 1;
-   else if (clr_done)
-      done <= 0;
+  if(!rst_n)
+    curr_state <= IDLE;
+  else 
+    curr_state <= next_state;
 end
 
-//  SS_n
-always_ff @(posedge clk, negedge rst_n) begin
-   if(!rst_n)
-     SS_n <= 1;
-   else if (set_ss_n)
-     SS_n <= 1;
-   else if (clr_ss_n)
-     SS_n <= 0;
-end
-
-// next state logic
-always_ff @(posedge clk, negedge rst_n) begin
-   if(!rst_n)
-     state <= IDLE;
-   else
-     state <= next_state;
-end
-
-// combinational logic for the state machine
+//////////////////////////
+// State machine logic //
+////////////////////////
 always_comb begin
- 
-  // default outputs for the state machine
-  set_ss_n = 0;
-  clr_ss_n = 0;
-  set_done = 0;
-  clr_done = 0; 
-  shft = 0;
+
+  //////////////////////////////////////
+  // Default assign all output of SM //
+  ////////////////////////////////////
   smpl = 0;
+  shft = 0;
+  set_done = 0;
+  clr_done = 0;
   rst_cnt = 0;
-  next_state = IDLE;
+  set_SS_n = 0;
+  clr_SS_n = 0;
+  clr_bit_cnt = 0;
+  //next_state = IDLE;
 
-  case(state)
- 
-   IDLE: begin
-    if(wrt) begin
-       next_state = FRONT_PORCH; 
-       clr_done = 1'b1;
-       clr_ss_n = 1'b1;
-       rst_cnt = 1'b1;     
-    end
-    else
-       next_state = IDLE;
-   end
+  case(curr_state) 
 
-   FRONT_PORCH: begin
-     if(sclk_div == 5'b11111) begin
-       next_state = BITS;
-     end
-     else begin
-       next_state = FRONT_PORCH;
-     end
-   end
-
-   BITS: begin
-     if(bit_cnt == 5'b01111 & sclk_div == 5'b01111) begin
-       next_state = BACK_PORCH;
-       smpl = 1'b1;
-     end
-     else if(sclk_div == 5'b01111) begin
-       next_state = BITS;
-       smpl = 1'b1;
-     end
-     else if(sclk_div == 5'b11111) begin
-       next_state = BITS;
-       shft = 1'b1;
-     end
-     else begin
-        next_state = BITS;
-     end
-   end
-
-  BACK_PORCH: begin
-     if(sclk_div == 5'b11111) begin
+    // initial state
+    IDLE: begin                             
+      if (wrt) begin
+        next_state = FRONT_PORCH;
+        rst_cnt = 1;
+        clr_done = 1;
+        clr_SS_n = 1;
+        clr_bit_cnt = 1;
+      end 
+      else begin
         next_state = IDLE;
-        shft = 1'b1;
-        set_done = 1'b1;
-        set_ss_n = 1'b1;
-        rst_cnt = 1'b1;   
-     end
-     else
-        next_state = BACK_PORCH;
-  end
-   
-  default: next_state = IDLE;
+      end
+    end
   
- endcase
+    FRONT_PORCH: begin                      
+      if (sclk_div == 5'b11111) begin
+        next_state = BITS;
+      end 
+      else begin
+        next_state = FRONT_PORCH;
+      end
+    end
 
+    BITS: begin
+      // when bit count and sclk_div is 15... given priority
+      if (sclk_div == 5'b01111 & bit_cnt == 5'b01111) begin 
+        smpl = 1;
+        next_state = BACK_PORCH;
+      end
+      else if (sclk_div == 5'b11111) begin
+        next_state = BITS;
+        shft = 1;
+      end
+      else if(sclk_div == 5'b01111) begin
+        smpl = 1;
+        next_state = BITS;
+      end
+      else begin
+        next_state = BITS;
+      end 
+    end 
+
+    BACK_PORCH: begin                             
+      if(sclk_div == 5'b11111) begin
+        next_state = IDLE;
+        rst_cnt = 1;
+        set_done = 1;
+        set_SS_n = 1;
+        shft = 1;
+      end 
+      else begin
+        next_state = BACK_PORCH;
+      end
+    end
+
+  default: begin // default case state should be IDLE
+    next_state = IDLE;
+  end
+    
+  endcase
+
+ end // end of always block
+
+/////////////////////
+// MISO sampling  //
+///////////////////
+always_ff @(posedge clk) begin 
+  if(smpl)
+    MISO_smpl <= MISO;
+end 
+
+//////////////////
+// MOSI write  //
+////////////////
+always_ff @(posedge clk, negedge rst_n) begin
+  if (!rst_n)
+    shft_reg = 16'b0;
+  else if (wrt)
+    shft_reg = cmd;
+  else if(shft)  
+    shft_reg = {shft_reg[14:0], MISO_smpl};
 end
+
+/////////////////////////
+// Output done logic  //
+///////////////////////
+always_ff  @(posedge clk, negedge rst_n) begin
+  if(!rst_n)
+    done <= 1'b0;
+  else if(set_done)
+    done <= 1'b1;
+  else if(clr_done)
+    done <= 1'b0;
+  else if (wrt)
+    done <= 1'b0;
+end 
+
+/////////////////////////
+// SS_n output logic  //
+///////////////////////
+always_ff @(posedge clk, negedge rst_n) begin
+  if(!rst_n)
+    SS_n <= 1'b1;
+  else if(set_SS_n)
+    SS_n <= 1'b1;
+  else if (wrt)
+    SS_n <= 1'b0;
+end 
 
 endmodule
