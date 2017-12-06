@@ -14,6 +14,11 @@ module ESC_test(clk,RST_n,inc,sel_speed,OFF,SPEED,PWM);
 	//////////////////////////////////////
 	wire rst_n;		// global reset to all other blocks, produced by rst_synch
 	wire released;	// from PB_release unit, goes high 1 clock with button release
+	
+	wire [3:0] cnt1;
+	wire [3:0] cnt2;
+	wire en1;
+	wire en2; 
 
 	/////////////////////////////////////
 	// Instantiate reset synchronizer //
@@ -30,18 +35,16 @@ module ESC_test(clk,RST_n,inc,sel_speed,OFF,SPEED,PWM);
 	// hook up their enable inputs.  You may have to infer //
 	// some internal signals to make the enable logic     //
 	///////////////////////////////////////////////////////
-        assign en1 = (~sel_speed) & released;
+        assign en1 = ~sel_speed & released;
         assign en2 = sel_speed & released; 
         cnt4 iCNT1(.en(en1), .rst_n(rst_n), .clk(clk), .cnt(cnt1));
         cnt4 iCNT2(.en(en2), .rst_n(rst_n), .clk(clk), .cnt(cnt2));
 
-
-
     ///////////////////////////////////////////////////////////////////////////
 	// Use assigns to create OFF and SPEED from output of your two counters //
 	/////////////////////////////////////////////////////////////////////////
-	assign OFF = {0, cnt1, 5'h00} ;
-	assign SPEED = {cnt2, 7'h00} ;
+	assign OFF = {1'b0, cnt1, 5'b00000};
+	assign SPEED = {cnt2, 7'h00};
 	
 	///////////////////////////////////////////////////
 	// Instantiate ESC_interface (which is the DUT) //
