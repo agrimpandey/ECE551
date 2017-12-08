@@ -12,15 +12,23 @@ parameter WIDTH = 9;
 reg signed [WIDTH-1:0] timer;
 
 
-always_ff @(posedge clk) begin
-     if (clr_tmr)
-	timer <= 0;
-     else
+always_ff @(posedge clk, negedge rst_n) begin
+  if(!rst_n) begin 
+	timer <= {WIDTH {1'b0}};
+  end
+  
+  else if(clr_tmr) begin
+	timer <= {WIDTH {1'b0}};
+  end
+
+  else begin
 	timer <= timer + 1;
+  end
+
 end
 
 
-assign tmr_full = &timer; 
+assign tmr_full = &timer;
 
 
 endmodule

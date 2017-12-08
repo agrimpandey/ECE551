@@ -58,13 +58,14 @@ module QuadCopter(clk,RST_n,SS_n,SCLK,MOSI,MISO,INT,RX,TX,LED,FRNT,BCK,LFT,RGHT,
   /////////////////////////////////////////////////////////////////////////
   // Instantiate UART_wrapper that receives commands from wireless link //
   /////////////////////////////////////////////////////////////////////// 
-  UART_wrapper wrapper(.clk(clk),.rst_n(rst_n),.snd_resp(send_resp),.resp(resp),.clr_cmd_rdy(clr_cmd_rdy),.cmd_rdy(cmd_rdy),.resp_sent(resp_sent),.cmd(cmd),.data(data),.RX(RX),.TX(TX));
+  UART_wrapper wrapper(.clk(clk), .rst_n(rst_n), .cmd_rdy(cmd_rdy), .snd_resp(send_resp), .resp_sent(resp_sent),
+					   .clr_cmd_rdy(clr_cmd_rdy), .cmd(cmd), .data(data), .resp(resp), .RX(RX), .TX(TX));
 						
   ///////////////////////////////////////////////////////////////////////
   // Instantiate command config unit (interprets & executes commands) //
   /////////////////////////////////////////////////////////////////////	  
   cmd_cfg iCMD(.clk(clk), .rst_n(rst_n), .cmd_rdy(cmd_rdy), .cmd(cmd), .data(data),
-               .clr_cmd_rdy(clr_cmd_rdy), .resp(resp), .send_resp(send_resp),
+               .clr_cmd_rdy(clr_cmd_rdy), .resp(resp), .snd_resp(send_resp),
 			   .d_ptch(d_ptch), .d_roll(d_roll), .d_yaw(d_yaw), .thrst(thrst),.batt(batt_level[11:4]),
 			   .strt_cal(strt_cal),.inertial_cal(inertial_cal),.motors_off(motors_off),
 			   .cal_done(cal_done),.strt_cnv(strt_cnv),.cnv_cmplt(cnv_cmplt));
@@ -96,7 +97,7 @@ module QuadCopter(clk,RST_n,SS_n,SCLK,MOSI,MISO,INT,RX,TX,LED,FRNT,BCK,LFT,RGHT,
   ////////////////////////////////////////////////////////////
   // Instantiate A2D Interface for reading battery voltage //
   //////////////////////////////////////////////////////////
-  A2D_intf iA2D(.clk(clk),.rst_n(rst_n),.strt_cnv(strt_cnv),.cnv_cmplt(cnv_cmplt),.chnnl(3'b000),
+  A2D_Intf iA2D(.clk(clk),.rst_n(rst_n),.strt_cnv(strt_cnv),.cnv_cmplt(cnv_cmplt),.chnnl(3'b000),
                 .res(batt_level),.SS_n(SS_A2D_n),.SCLK(SCLK_A2D),.MOSI(MOSI_A2D),.MISO(MISO_A2D));
 
   

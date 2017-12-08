@@ -1,0 +1,69 @@
+############
+# Read in the files #
+##############
+read_file -format sverilog {./QuadCopter.v ./UART_wrapper.sv ./UART.v ./UART_tx.v ./UART_rcv.sv ./cmd_cfg.sv ./timer_module.sv ./inert_intf.sv ./SPI_mstr16.sv ./inertial_integrator.sv ./flght_cntrl.sv ./ESCs.sv ./ESC_interface.sv ./A2D_Intf.sv ./reset_synch.sv}
+
+###########################
+# Define clock and set don't mess with it #
+##########################
+create_clock -name "clk" -period 2.5 -waveform { 0 1 }  { clk }
+set_dont_touch_network [find port clk]
+
+# setup pointer that contains all inputs except clock #
+set prim_inputs [remove_from_collection [all_inputs] [find port clk]]
+
+#########################
+# Set input delay & drive on all inputs #
+########################
+set_input_delay -clock clk 0.25 [copy_collection $prim_inputs]
+set_driving_cell -lib_cell ND2D2BWP -library tcbn40lpbwptc $prim_inputs
+##set_drive 50 $prim_inputs
+
+##########################
+# Set output delay & load on all outputs #
+##########################
+set_output_delay -clock clk 0.5 [all_outputs]
+set_load 0.10 [all_outputs]
+
+##########################
+# Set Clock Uncertainty  #
+##########################
+set_clock_uncertainty 0.15 clk
+
+#####################################
+# Wire load model allows it to estimate internal parasitics #
+####################################
+set_wire_load_model -name TSMC32K_Lowk_Conservative \
+                               -library tcbn40lpbwptc
+
+##################################
+# Max transition time is important for Hot-E reasons #
+#################################
+set_max_transition 0.10 [current_design]
+
+#########################
+# Now actually synthesize for 1st time #
+#########################
+compile -map_effort high
+
+check_design
+## design ware component caused extra pins
+
+report_area
+########################
+# Take a look at max & min timings #
+#######################
+report_timing -path full -delay max -nworst 3
+report_timing -path full -delay min -nworst 3
+
+## smash the hierarchy (design ware component)
+ungroup -all
+
+compile -map_effort high
+
+check_design
+
+report_area
+
+#### write out final netlist ######
+write -format verilog QuadCopter -output QuadCopter.vg
