@@ -23,7 +23,7 @@ logic C_P_H, C_P_L, C_R_H, C_R_L, C_Y_H, C_Y_L, C_AX_H, C_AX_L, C_AY_H, C_AY_L;
 SPI_mstr16 SPI(.clk(clk), .rst_n(rst_n), .SS_n(SS_n), .SCLK(SCLK), .MOSI(MOSI), .MISO(MISO),
 	       .wrt(wrt), .cmd(cmd), .done(done), .rd_data(rd_data));
 
-inertial_integrator #(3) int1(.clk(clk), .rst_n(rst_n), .strt_cal(strt_cal), .cal_done(cal_done),
+inertial_integrator #(11) int1(.clk(clk), .rst_n(rst_n), .strt_cal(strt_cal), .cal_done(cal_done),
 			 .vld(vld), .ptch_rt(ptch_rt), .roll_rt(roll_rt), .yaw_rt(yaw_rt),
                          .ax(ax), .ay(ay), .ptch(ptch), .roll(roll), .yaw(yaw));
 
