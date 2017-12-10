@@ -1,65 +1,56 @@
-read_file -format sverilog {./UART.v ./UART_tx.v ./UART_rcv.sv}
+read_file -format sverilog {UART_tx.v UART_rcv.sv UART.v}
 
-
-##################################################
-#Define clock# 
-##################################################
-
-create_clock -name "clk" -period 2 -waveform { 0 1 } { clk }
+set current_design UART
+###########################################
+# Define clock and set don't mess with it #
+###########################################
+create_clock -name "clk" -period 2 -waveform { 0 1 }  { clk  }
 set_dont_touch_network [find port clk]
 
 # setup pointer that contains all inputs except clock #
-set prim_inputs [remove_from_collection [all_inputs] [find port clk]]
+set prim_inputs [remove_from_collection [remove_from_collection [all_inputs] [find port clk]] [find port rst_n]]
 
-##################################################
-# Set input delay & drive on all inputs          #
-##################################################
+#########################################
+# Set input delay & drive on all inputs #
+#########################################
 set_input_delay -clock clk 0.5 [copy_collection $prim_inputs]
 
-# set drive strength #
-set_drive 50 rst_n
+set_driving_cell -lib_cell ND2D2BWP -from_pin A1 -library \
+                       tcbn40lpbwptc [copy_collection $prim_inputs]
 
-##################################################
-# set output delay of 0.75ns on all outputs      #
-##################################################
-set_output_delay -clock clk 0.75 [all_outputs]
+set_drive 0.1 rst_n
 
+##########################################
+# Set output delay & load on all outputs #
+##########################################
+set_output_delay -clock clk .75 [all_outputs]
+set_load 0.15 [all_outputs]
 
-##################################################
-# define 0.10pf load on all outputs #
-##################################################
-set_load 0.10 [all_outputs]
-
-##################################################
-#set a max transition time of 0.1ns on all nodes #
-##################################################
-set_max_transition 0.10 [current_design]
-
-##################################################
-# employ the TSMC32K_Lowk_Conservative model     #
-##################################################
+#############################################################
+# Wire load model allows it to estimate internal parasitics #
+#############################################################
 set_wire_load_model -name TSMC32K_Lowk_Conservative \
--library tcbn40lpbwptc
+                               -library tcbn40lpbwptc
 
-##################################################
-# produce an area report                         #
-##################################################
-compile -map_effort medium 
+##################################
+# Max transition time is important for Hot-E reasons #
+#################################
+set_max_transition 0.15 [current_design]
+
+########################################
+# Now actually synthesize for 1st time #
+########################################
+compile -map_effort medium
+
 check_design
-report_area
-report_timing -path full -delay max -nworst 3
-report_timing -path full -delay min -nworst 3
-ungroup -all
 
-##################################################
-# gate level verilog netlist                     #
-##################################################
+report_area > UART_area.txt
+####################################
+# Take a look at max & min timings #
+####################################
+report_timing -delay min
+report_timing -delay max
+
+
+#### write out final netlist ######
 write -format verilog UART -output UART.vg
-
-
-
-
-
-
-
-
