@@ -1,8 +1,8 @@
-module CommMaster(clk, rst_n, resp_rdy, resp, data, snd_cmd, cmd, TX, RX);
+module CommMaster(clk, rst_n, resp_rdy, resp, data, send_cmd, cmd, TX, RX, clr_resp_rdy, cmd_sent);
 
 // Coded by: Doug Neu //
 
-input snd_cmd, clk, rst_n, RX;
+input send_cmd, clk, rst_n, RX;
 input [7:0] cmd;
 input [15:0] data;
 output logic TX, resp_rdy;
@@ -15,18 +15,21 @@ logic [7:0] tx_data;
 logic snd_frm;
 logic frm_snt;
 
-logic clr_rx_rdy;
+input clr_resp_rdy;
+output cmd_sent;
+
+assign cmd_sent = tx_done;
 
 logic clr_cmplt, set_cmplt;
 
 logic [7:0] FF1, FF2;
 
-UART UART1(.clk(clk), .rst_n(rst_n), .TX(TX), .RX(RX), .rx_rdy(resp_rdy), .clr_rx_rdy(clr_rx_rdy),
+UART UART1(.clk(clk), .rst_n(rst_n), .TX(TX), .RX(RX), .rx_rdy(resp_rdy), .clr_rx_rdy(clr_resp_rdy),
 		      .rx_data(resp), .trmt(trmt), .tx_data(tx_data), .tx_done(tx_done));
 
 
 //assign resp_rdy = trmt;
-assign snd_frm = snd_cmd;
+assign snd_frm = send_cmd;
 assign tx_data = (sel == 2'b00) ? FF2 : // Last 8 bits of data
 		 (sel == 2'b01) ? FF1 : // First 8 bits of data
 	 	  cmd; // If neither high or low byte selected, use cmd
@@ -36,7 +39,7 @@ assign tx_data = (sel == 2'b00) ? FF2 : // Last 8 bits of data
 always_ff @(posedge clk, negedge rst_n) begin
   if (!rst_n)
     FF1 <= 8'h0;
-  else if (snd_cmd)
+  else if (send_cmd)
     FF1 <= data[15:8];
 end
 
@@ -44,7 +47,7 @@ end
 always_ff @(posedge clk, negedge rst_n) begin
   if (!rst_n)
     FF2 <= 8'h0;
-  else if (snd_cmd)
+  else if (send_cmd)
     FF2 <= data[7:0];
 end
 
@@ -75,7 +78,7 @@ always_comb begin
   set_cmplt = 1'b0;
   clr_cmplt = 1'b0;
   sel = 2'b10;
-  clr_rx_rdy = 1'b0;
+  
   next_state = IDLE;
 
   case(state)
@@ -83,7 +86,7 @@ always_comb begin
       if (snd_frm) begin
 	trmt = 1'b1;
 	clr_cmplt = 1'b1;
-	clr_rx_rdy = 1'b1;
+	
 	next_state = WaitH;
       end
       else

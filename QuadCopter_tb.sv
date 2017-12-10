@@ -17,6 +17,18 @@ reg clr_resp_rdy;				// asserted to knock down resp_rdy
 
 /////// declare any localparams here /////
 
+localparam REQ_BATT = 8'h01;
+localparam SET_PTCH = 8'h02;
+localparam SET_ROLL = 8'h03;
+localparam SET_YAW = 8'h04;
+localparam SET_THRST = 8'h05;
+localparam EMER_LAND = 8'h08;
+localparam MTRS_OFF = 8'h07;
+localparam CALIBRATE = 8'h06;
+
+localparam POS_ACK = 8'hA5;
+
+wire equal_to_zero;
 
 ////////////////////////////////////////////////////////////////
 // Instantiate Physical Model of Copter with Inertial sensor //
@@ -46,14 +58,144 @@ CommMaster iMSTR(.clk(clk), .rst_n(RST_n), .RX(TX), .TX(RX),
 
 initial begin
 
-  This is where you do the real work.
-  This section could be done as a bunch of calls to testing sub tasks contained in a separate file.
-  
-  You might want to consider having several versions of this file that test several different
-  smaller things instead of having one huge test that runs forever.
+	clk = 1'b0;
+	RST_n = 1'b0;
+	@(posedge clk) RST_n = 1'b1;
 
+///////////////////////
+//SENDING BATTERY CMD//
+///////////////////////
+	cmd_to_copter = REQ_BATT;
+	data = 16'h0000;
+	
+	@(posedge clk) send_cmd = 1;
+	@(posedge clk) send_cmd = 0;
 
- 
+	//Once response is ready, check the response value, and check that the resulting battery voltage is non-zero
+	@(posedge resp_rdy);
+	if( resp != 8'h00 ) begin
+		$display("Battery CMD successful. BATT = %h", resp);
+		$stop();
+	end
+	else begin
+		$display("ERROR: Battery CMD failed. EXPECTED: Something non-zero. ACTUAL: %h.", resp);
+		$stop();
+	end
+
+/////////////////////////
+//SENDING CALIBRATE CMD//
+/////////////////////////
+	cmd_to_copter = CALIBRATE;
+	data = 16'h8789;
+	
+	@(posedge clk) send_cmd = 1;
+	@(posedge clk) send_cmd = 0;
+
+	//@(negedge motors_off) $display("Motors on.");
+
+	//@(posedge strt_cal) $display("Start Cal.");
+          
+	//Once response is ready, check the response value, and check the result of the command we sent
+	@(posedge resp_rdy)
+	if( resp == POS_ACK ) begin
+		$display("Response from Calibration received successfully.", resp);
+		//if( cal_done ) begin
+			//$display("Response and Calibration completed.");
+		//end
+		//else begin
+			//$display("ERROR: Response sucessful, Calibration incomplete.");
+			//$stop();	
+		//end
+	end
+	else begin
+		$display("ERROR: Response incorrect. EXPECTED: 8'hA5 (POS_ACK). ACTUAL: %h.", resp);
+		$stop();
+	end
+
+	$stop();
+
+/////////////////////////
+//SENDING SET THRST CMD//
+/////////////////////////
+	cmd_to_copter = SET_THRST;
+	data = 16'hFFFF;
+	
+	//sending and resetting command
+	@(posedge clk) send_cmd = 1;
+	@(posedge clk) send_cmd = 0;
+	
+	//Once response is ready, check the response value, and check the result of the command we sent
+	@(posedge resp_rdy)
+	if( resp == POS_ACK ) begin
+		//if( thrst == 9'h013 ) begin
+		//	$display("Response and THRST successful.");
+		//end
+		//else begin
+		//	$display("ERROR: Response sucessful, THRST incorrect. EXPECTED: 9'h013. ACTUAL: %h.", thrst);
+		//	$stop();	
+		//end
+		$display("ERROR: Response was %h.", resp);
+		$stop();
+	end
+	else begin
+		$display("ERROR: Response incorrect. EXPECTED: 8'hA5 (POS_ACK). ACTUAL: %h.", resp);
+		$stop();
+	end
+
+/*
+//////////////////////////////
+//SENDING EMERGENCY LAND CMD//
+//////////////////////////////
+	cmd_to_copter = EMER_LAND;
+	data = 16'h0013;
+	
+	//sending and resetting command
+	snd_cmd = 1;
+	@(posedge clk) send_cmd = 0;
+	
+	assign equal_to_zero = ((thrst == 0) && (d_ptch == 0) && (d_roll == 0) && (d_yaw == 0));
+	
+	//Once response is ready, check the response value, and check the result of the command we sent
+	@(posedge resp_rdy)
+	if( resp == POS_ACK ) begin
+		if( equal_to_zero ) begin
+			$display("Response and EMER_LAND successful.");
+		end
+		else begin
+			$display("ERROR: Response sucessful, EMER_LAND incorrect. D_PTCH: %h, D_ROLL: %h, D_YAW: %h, THRST: %h", d_ptch, d_roll, d_yaw, thrst);
+			$stop();	
+		end
+	end
+	else begin
+		$display("ERROR: Response incorrect. EXPECTED: 8'hA5 (POS_ACK). ACTUAL: %h.", resp);
+		$stop();
+	end
+
+//////////////////////////
+//SENDING MOTORS OFF CMD//
+//////////////////////////
+	cmd_to_copter = MTRS_OFF;
+	data = 16'h5252;
+	
+	send_cmd();
+	
+	//Once response is ready, check the response value, and check the result of the command we sent
+	@(posedge resp_rdy)
+	if( resp == POS_ACK ) begin
+		if( motors_off ) begin
+			$display("Response and MOTORS_OFF successful.");
+		end
+		else begin
+			$display("ERROR: Response sucessful, MOTORS_OFF incorrect.");
+			$stop();	
+		end
+	end
+	else begin
+		$display("ERROR: Response incorrect. EXPECTED: 8'hA5 (POS_ACK). ACTUAL: %h.", resp);
+		$stop();
+	end
+
+*/
 end
 
 always
