@@ -55,22 +55,22 @@ assign rght_off_in = RGHT_OFF & ~motors_off;
 
 
 
-ESC_interface inst1(.clk(clk), .rst_n(rst_n), 
+ESC_interface #(18) inst1(.clk(clk), .rst_n(rst_n), 
                     .SPEED(frnt_spd_in), 
                     .OFF(frnt_off_in), 
                     .PWM(frnt));
 
-ESC_interface inst2(.clk(clk), .rst_n(rst_n), 
+ESC_interface #(18) inst2(.clk(clk), .rst_n(rst_n), 
                     .SPEED(bck_spd_in), 
                     .OFF(bck_off_in), 
                     .PWM(bck));
 
-ESC_interface inst3(.clk(clk), .rst_n(rst_n), 
+ESC_interface #(18) inst3(.clk(clk), .rst_n(rst_n), 
                     .SPEED(lft_spd_in), 
                     .OFF(lft_off_in), 
                     .PWM(lft));
 
-ESC_interface inst4(.clk(clk), .rst_n(rst_n), 
+ESC_interface #(18) inst4(.clk(clk), .rst_n(rst_n), 
                     .SPEED(rght_spd_in), 
                     .OFF(rght_off_in), 
                     .PWM(rght));
