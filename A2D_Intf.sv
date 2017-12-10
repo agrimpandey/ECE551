@@ -1,6 +1,6 @@
 // Sneha Patri, Doug Neu, Agrim Pandey, Ethan Link
 
-module A2D_intf (clk, 
+module A2D_Intf (clk, 
                  rst_n, 
                  strt_cnv, 
                  chnnl,
