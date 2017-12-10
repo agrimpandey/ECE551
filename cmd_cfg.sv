@@ -13,7 +13,7 @@ module cmd_cfg(clk,
                cnv_cmplt,
                clr_cmd_rdy,
                resp,
-               snd_rsp, 
+               send_resp, 
                d_ptch, 
                d_roll,
                d_yaw,
@@ -34,7 +34,7 @@ input cnv_cmplt;
 
 output reg clr_cmd_rdy;
 output reg [7:0] resp;
-output reg snd_rsp; 
+output reg send_resp; 
 output logic [15:0] d_ptch; 
 output logic [15:0] d_roll;
 output logic [15:0] d_yaw;
@@ -56,7 +56,6 @@ logic tmr_full;
 
 parameter WIDTH = 9;
 
-//Creating localparams for the commands for readability purposes
 localparam REQ_BATT = 8'h01;
 localparam SET_PTCH = 8'h02;
 localparam SET_ROLL = 8'h03;
@@ -151,17 +150,14 @@ always_comb begin
  strt_cnv = 0;
  inertial_cal = 0;
  clr_cmd_rdy = 0;
- snd_rsp  = 0;
+ send_resp  = 0;
  emergency = 0;
  resp = 0;
  strt_cal = 0;
 
- //////////////////
- //STATE MACHINE///
- //////////////////
  case (state)
 
-    IDLE:begin //The idle state deals with handling the commands
+    IDLE:begin
 
       nxt_state = IDLE;
        
@@ -169,7 +165,7 @@ always_comb begin
 
             clr_cmd_rdy = 1;
 
-             case(cmd) //separate case statement to model behavior based on command
+             case(cmd) 
 
                 SET_PTCH: begin
                    wptch = 1;
@@ -214,24 +210,17 @@ always_comb begin
             endcase
         end
     end
-	
-	///////////////////////////////////////////////////////////
-	//The other states deal with which response to send back///
-	///////////////////////////////////////////////////////////
-	
-	//In the battery state, we want to send the battery voltage back as the response
-	// and go back to IDLE.
+
     BATT: begin
        if(cnv_cmplt) begin
           resp = batt[7:0];
-          snd_rsp = 1;
+          send_resp = 1;
 	  nxt_state = IDLE;
        end
        else
           nxt_state = BATT;
     end
 
-	//CAL1 and CAL2 are the calibration states
     CAL1: begin
        if(tmr_full) begin
          strt_cal = 1;
@@ -248,7 +237,7 @@ always_comb begin
        if(cal_done) begin
          nxt_state = IDLE;
          inertial_cal = 1;
-         snd_rsp = 1;
+         send_resp = 1;
          resp = 8'hA5;
        end
        else begin
@@ -257,10 +246,9 @@ always_comb begin
        end
     end
 
-	//The send ack state handles all the commands where we want to send 8'hA5 back as the response
     SEND_ACK: begin
 	resp = 8'hA5;
-	snd_rsp=1;
+	send_resp=1;
 	nxt_state = IDLE;
     end
   
