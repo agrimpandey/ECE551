@@ -28,6 +28,10 @@ localparam CALIBRATE = 8'h06;
 
 localparam POS_ACK = 8'hA5;
 
+localparam DES_PTCH = 8'h90;
+localparam DES_ROLL = 8'h61;
+localparam DES_YAW = 8'h3B;
+
 wire equal_to_zero;
 
 ////////////////////////////////////////////////////////////////
@@ -118,7 +122,7 @@ initial begin
 //SENDING SET THRST CMD//
 /////////////////////////
 	cmd_to_copter = SET_THRST;
-	data = 16'hFFFF;
+	data = 16'h0050;
 	
 	//sending and resetting command
 	@(posedge clk) send_cmd = 1;
@@ -127,20 +131,117 @@ initial begin
 	//Once response is ready, check the response value, and check the result of the command we sent
 	@(posedge resp_rdy)
 	if( resp == POS_ACK ) begin
-		//if( thrst == 9'h013 ) begin
-		//	$display("Response and THRST successful.");
-		//end
-		//else begin
-		//	$display("ERROR: Response sucessful, THRST incorrect. EXPECTED: 9'h013. ACTUAL: %h.", thrst);
-		//	$stop();	
-		//end
-		$display("ERROR: Response was %h.", resp);
+		
+		//wait 10 ESC pulses
+		repeat(10) begin
+			@(negedge frnt_ESC);	
+		end
+
+		$display("Response was %h.", resp);
 		$stop();
 	end
 	else begin
 		$display("ERROR: Response incorrect. EXPECTED: 8'hA5 (POS_ACK). ACTUAL: %h.", resp);
 		$stop();
 	end
+
+	
+//Now that the Quadcopter is airborne, let's set some desired ptch, roll, and yaw  values, and hopefully they converge to those values
+/////////////////////////
+//SENDING SET PTCH CMD//
+/////////////////////////
+	cmd_to_copter = SET_PTCH;
+	data = DES_PTCH;
+	
+	//sending and resetting command
+	@(posedge clk) send_cmd = 1;
+	@(posedge clk) send_cmd = 0;
+	
+	//Once response is ready, check the response value, and check the result of the command we sent
+	@(posedge resp_rdy)
+	if( resp == POS_ACK ) begin
+		
+		//wait 10 ESC pulses
+		repeat(10) begin
+			@(negedge frnt_ESC);	
+		end
+
+		$display("Response was %h.", resp);
+		$display("Check wave. d_ptch should be %h.", data);
+		$stop();
+	end
+	else begin
+		$display("ERROR: Response incorrect. EXPECTED: 8'hA5 (POS_ACK). ACTUAL: %h.", resp);
+		$stop();
+	end
+	
+	
+	
+/////////////////////////
+//SENDING SET ROLL CMD//
+/////////////////////////
+	cmd_to_copter = SET_ROLL;
+	data = DES_ROLL;
+	
+	//sending and resetting command
+	@(posedge clk) send_cmd = 1;
+	@(posedge clk) send_cmd = 0;
+	
+	//Once response is ready, check the response value, and check the result of the command we sent
+	@(posedge resp_rdy)
+	if( resp == POS_ACK ) begin
+		
+		//wait 10 ESC pulses
+		repeat(10) begin
+			@(negedge frnt_ESC);	
+		end
+
+		$display("Response was %h.", resp);
+		$display("Check wave. d_roll should be %h.", data);
+		$stop();
+	end
+	else begin
+		$display("ERROR: Response incorrect. EXPECTED: 8'hA5 (POS_ACK). ACTUAL: %h.", resp);
+		$stop();
+	end
+	
+/////////////////////////
+//SENDING SET YAW CMD//
+/////////////////////////
+	cmd_to_copter = SET_YAW;
+	data = DES_YAW;
+	
+	//sending and resetting command
+	@(posedge clk) send_cmd = 1;
+	@(posedge clk) send_cmd = 0;
+	
+	//Once response is ready, check the response value, and check the result of the command we sent
+	@(posedge resp_rdy)
+	if( resp == POS_ACK ) begin
+		
+		//wait 10 ESC pulses
+		repeat(10) begin
+			@(negedge frnt_ESC);	
+		end
+
+		$display("Response was %h.", resp);
+		$display("Check wave. d_yaw should be %h.", data);
+		$stop();
+	end
+	else begin
+		$display("ERROR: Response incorrect. EXPECTED: 8'hA5 (POS_ACK). ACTUAL: %h.", resp);
+		$stop();
+	end
+	
+	
+	repeat(100) begin
+			@(negedge frnt_ESC);	
+		end
+	$display("Check wave. d_ptch should be around %h. \n d_roll should be around %h. \n d_yaw should be around %h.", DES_PTCH,DES_ROLL,DES_YAW);
+	$stop();
+	
+	
+
 
 /*
 //////////////////////////////
