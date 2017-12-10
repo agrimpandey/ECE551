@@ -24,12 +24,12 @@ assign promote_4_bits = compensated_speed << 4;
 assign setting = promote_4_bits + CNST; 
 
 // compare: greater than or equal to
-assign R = (setting >= count[16:0]) ? 1:0;  
+assign R = (count[16:0] >= setting);  
 
 // counter
 always_ff@(posedge clk, negedge rst_n) begin
    if (!rst_n)
-      count <= 20'h00000;
+      count <= {PERIOD_WIDTH{1'b0}};
    else
       count <= count + 1;
 end
