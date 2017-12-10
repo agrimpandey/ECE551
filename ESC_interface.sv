@@ -1,50 +1,51 @@
-module esc(clk, rst_n, speed, off, pwm);
-
+module ESC_interface(clk, rst_n, SPEED, OFF, PWM);
 
 input clk;
 input rst_n;
+input [10:0] SPEED;
+input [9:0] OFF;
+output logic PWM;
 
-input [10:0] speed;
+localparam CNST = 16'd50000;
+parameter PERIOD_WIDTH = 20;
 
-input [9:0] off;
+reg [PERIOD_WIDTH - 1: 0] count;
 
-output reg pwm;
+logic [11:0] compensated_speed; 
+logic [15:0] promote_4_bits;
+logic [16:0] setting;
+logic R, S;
 
-reg [19:0] count;
+// adder
+assign compensated_speed = SPEED + OFF;
+//left shifter
+assign promote_4_bits = compensated_speed << 4;
+// adder
+assign setting = promote_4_bits + CNST; 
 
-wire [3:0] promotion;
+// compare: greater than or equal to
+assign R = (setting >= count[16:0]) ? 1:0;  
 
-
-wire [11:0] compensated_speed;
-
-wire [16:0] setting; 
-
-
-assign compensated_speed = speed + off; 
-
-assign promotion = compensated_speed << 4; 
-
-assign setting = compensated_speed + 16'd50000;
-
-wire [16:0] reset = setting >= count[16:0] ? 1 : 0;
-
-always @(posedge clk, negedge rst_n) begin
-  if(!rst_n)
+// counter
+always_ff@(posedge clk, negedge rst_n) begin
+   if (!rst_n)
       count <= 20'h00000;
-  else 
-     count <= count + 1;
+   else
+      count <= count + 1;
 end
 
-wire set = &count[19:0];
+// and all bits
+assign S = &count[PERIOD_WIDTH - 1:0]; 
 
-always_ff @(posedge clk, negedge rst_n)
- if (!rst_n)
- pwm <= 1'b0;
- else if (reset)
- pwm <= 1'b0;
- else if (set)
- pwm <= 1'b1;
+// sr ff
+always_ff @(posedge clk, negedge rst_n) begin
+  if (!rst_n)
+    PWM <= 1'b0;
+  else if (S)
+    PWM <= 1'b1;
+  else if (R)
+    PWM <= 1'b0;
+  // else PWM retains the value
+end
 
- 
-
-endmodule
+endmodule 
