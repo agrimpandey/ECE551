@@ -67,14 +67,18 @@ localparam CALIBRATE = 8'h06;
 
 timer_module #(WIDTH) iDUTtimer(.clk(clk), .rst_n(rst_n), .clr_tmr(clr_tmr), .tmr_full(tmr_full));
 
+
 //////////////////////////////
 // d_ptch output logic     //
 ////////////////////////////
 always_ff @(posedge clk, negedge rst_n) begin
   if(!rst_n)
     d_ptch <= 16'b0;
+  else if(emergency)
+     d_ptch <= 16'b0;
   else if(wptch)
     d_ptch <= data;
+  
 end
 
 //////////////////////////////
@@ -83,6 +87,8 @@ end
 always_ff @(posedge clk, negedge rst_n) begin
   if(!rst_n)
     d_roll <= 16'b0;
+  else if(emergency)
+    d_roll <=16'b0;
   else if(wroll)
     d_roll <= data;
 end
@@ -93,13 +99,17 @@ end
 always_ff @(posedge clk, negedge rst_n) begin
   if(!rst_n)
     d_yaw <= 16'b0;
+  else if(emergency)
+    d_yaw <= 16'b0;
   else if(wyaw)
     d_yaw <= data;
 end
 
 always_ff @(posedge clk, negedge rst_n) begin
   if(!rst_n)
-    thrst <= 16'b0;
+    thrst <= 9'b0;
+  else if(emergency)
+    thrst <= 9'b0;
   else if(wthrst)
     thrst <= data;
 end
@@ -116,17 +126,19 @@ always_ff @(posedge clk, negedge rst_n) begin
     motors_off <= 1'b0;
 end
 
+/*
 //////////////////////////////
 //emergency///////////////////
 //////////////////////////////
-always_ff @(posedge clk, negedge rst_n) begin
+always_ff @(posedge clk) begin
   if(emergency) begin
-    d_ptch <= 1'b0;
-    d_roll <= 1'b0;
-    d_yaw <= 1'b0;
-    thrst <= 1'b0;
+    d_ptch <= 16'b0;
+    d_roll <= 16'b0;
+    d_yaw <= 16'b0;
+    thrst <= 9'b0;
   end
 end
+*/
 
 typedef enum reg [3:0] {IDLE, SEND_ACK, BATT, CAL1, CAL2} state_t;
 state_t state, nxt_state;
