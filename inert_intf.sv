@@ -34,8 +34,8 @@ always_ff @(posedge clk, negedge rst_n) begin
     INT_FF2 <= 1'b0;
   end
   else begin
-    INT_FF1 <= 1'b1;
-    INT_FF2 <= 1'b1;
+    INT_FF1 <= INT;
+    INT_FF2 <= INT_FF1;
   end
 end
 
@@ -52,7 +52,7 @@ always_ff @(posedge clk, negedge rst_n) begin
   if(!rst_n)
     ptch_H <= 8'h00;
   else if (C_P_H)
-    ptch_H <= rd_data[15:8];
+    ptch_H <= rd_data[7:0];
 end
 
 // Get LSB of ptch
@@ -67,15 +67,15 @@ end
 always_ff @(posedge clk, negedge rst_n) begin
   if(!rst_n)
     yaw_H <= 8'h00;
-  else if (C_P_H)
-    yaw_H <= rd_data[15:8];
+  else if (C_Y_H)
+    yaw_H <= rd_data[7:0];
 end
 
 // Get LSB of yaw
 always_ff @(posedge clk, negedge rst_n) begin
   if(!rst_n)
     yaw_L <= 8'h00;
-  else if (C_P_L)
+  else if (C_Y_L)
     yaw_L <= rd_data[7:0];
 end
 
@@ -83,15 +83,15 @@ end
 always_ff @(posedge clk, negedge rst_n) begin
   if(!rst_n)
     roll_H <= 8'h00;
-  else if (C_P_H)
-    roll_H <= rd_data[15:8];
+  else if (C_R_H)
+    roll_H <= rd_data[7:0];
 end
 
 // Get LSB of roll
 always_ff @(posedge clk, negedge rst_n) begin
   if(!rst_n)
     roll_L <= 8'h00;
-  else if (C_P_L)
+  else if (C_R_L)
     roll_L <= rd_data[7:0];
 end
 
@@ -99,15 +99,15 @@ end
 always_ff @(posedge clk, negedge rst_n) begin
   if(!rst_n)
     AX_H <= 8'h00;
-  else if (C_P_H)
-    AX_H <= rd_data[15:8];
+  else if (C_AX_H)
+    AX_H <= rd_data[7:0];
 end
 
 // Get LSB of AX
 always_ff @(posedge clk, negedge rst_n) begin
   if(!rst_n)
     AX_L <= 8'h00;
-  else if (C_P_L)
+  else if (C_AX_L)
     AX_L <= rd_data[7:0];
 end
 
@@ -115,15 +115,15 @@ end
 always_ff @(posedge clk, negedge rst_n) begin
   if(!rst_n)
     AY_H <= 8'h00;
-  else if (C_P_H)
-    AY_H <= rd_data[15:8];
+  else if (C_AY_H)
+    AY_H <= rd_data[7:0];
 end
 
 // Get LSB of AY
 always_ff @(posedge clk, negedge rst_n) begin
   if(!rst_n)
     AY_L <= 8'h00;
-  else if (C_P_L)
+  else if (C_AY_L)
     AY_L <= rd_data[7:0];
 end
 
@@ -216,6 +216,7 @@ always_comb begin
       if(INT_FF2) begin
 	next_state = ptchL;
 	cmd = 16'hA2xx;
+	wrt = 1'b1;
       end
       else
 	next_state = WAIT;
@@ -240,7 +241,7 @@ always_comb begin
 	C_P_H = 1'b1;
       end
       else
-	next_state = rollL;
+	next_state = ptchH;
     end
 
     rollL: begin
