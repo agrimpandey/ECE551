@@ -16,8 +16,25 @@ logic [15:0] promote_4_bits;
 logic [16:0] setting;
 logic R, S;
 
+logic [10:0] PIPE_SPEED;
+logic [9:0] PIPE_OFF;
+
+always_ff @(posedge clk, negedge rst_n) begin
+  if (!rst_n)
+    PIPE_OFF <= 0;
+  else
+	PIPE_OFF <= OFF;
+end
+
+always_ff @(posedge clk, negedge rst_n) begin
+  if (!rst_n)
+    PIPE_SPEED <= 0;
+  else
+	PIPE_SPEED <= SPEED;
+end
+
 // adder
-assign compensated_speed = SPEED + OFF;
+assign compensated_speed = PIPE_SPEED + PIPE_OFF;
 //left shifter
 assign promote_4_bits = compensated_speed << 4;
 // adder

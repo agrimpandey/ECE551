@@ -36,6 +36,7 @@ reg signed [9:0] ptch_err_sat;
 reg signed [9:0] roll_err_sat;
 reg signed [9:0] yaw_err_sat;
 
+
 reg signed [9:0] ptch_pterm;                   ////// change some to wires from regs
 reg signed [9:0] roll_pterm;
 reg signed [9:0] yaw_pterm;
@@ -51,6 +52,10 @@ reg signed [5:0] yaw_D_diff_sat;
 reg signed [11:0] ptch_dterm;
 reg signed [11:0] roll_dterm;
 reg signed [11:0] yaw_dterm;
+
+reg signed [11:0] ptch_dterm_pipe;
+reg signed [11:0] roll_dterm_pipe;
+reg signed [11:0] yaw_dterm_pipe;
 
 reg signed [12:0] frnt_spd_unsat;
 reg signed [12:0] bck_spd_unsat;
@@ -83,7 +88,7 @@ assign ptch_err_sat = ptch_err[16] ? (~(&ptch_err[15:9]) ? (10'h200): (ptch_err[
 assign roll_err_sat = roll_err[16] ? (~(&roll_err[15:9]) ? (10'h200): (roll_err[9:0])) :
      ((|roll_err[15:9]) ? (10'h1FF): (roll_err[9:0]));  
 assign yaw_err_sat = yaw_err[16]   ? (~(&yaw_err[15:9]) ? (10'h200): (yaw_err[9:0])) :
-     ((|yaw_err[15:9]) ? (10'h1FF): (yaw_err[9:0]));  
+     ((|yaw_err[15:9]) ? (10'h1FF): (yaw_err[9:0])); 
 
 //right shift 
 assign ptch_pterm = {{ptch_err_sat[9]}, ptch_err_sat[9:1]} + {{3{ptch_err_sat[9]}}, ptch_err_sat[9:3]};
@@ -129,11 +134,34 @@ assign ptch_dterm = ptch_D_diff_sat*$signed(D_COEFF);
 assign roll_dterm = roll_D_diff_sat*$signed(D_COEFF);
 assign yaw_dterm  = yaw_D_diff_sat*$signed(D_COEFF);
 
+// Pipeline all dterms to shorten path
+always_ff @(posedge clk, negedge rst_n) begin
+  if (!rst_n)
+    ptch_dterm_pipe <= 0;
+  else
+    ptch_dterm_pipe <= ptch_dterm;
+end
+
+always_ff @(posedge clk, negedge rst_n) begin
+  if (!rst_n)
+    roll_dterm_pipe <= 0;
+  else
+    roll_dterm_pipe <= roll_dterm;
+end
+
+always_ff @(posedge clk, negedge rst_n) begin
+  if (!rst_n)
+    yaw_dterm_pipe <= 0;
+  else
+    yaw_dterm_pipe <= yaw_dterm;
+end
+
+
 // unsat speeds
-assign frnt_spd_unsat = thrst + 13'h200 - {{3{ptch_pterm[9]}}, ptch_pterm} - {{ptch_dterm[11]}, ptch_dterm} - {{3{yaw_pterm[9]}}, yaw_pterm} - {{yaw_dterm[11]}, yaw_dterm};
-assign bck_spd_unsat  = thrst + 13'h200 + {{3{ptch_pterm[9]}}, ptch_pterm} + {{ptch_dterm[11]}, ptch_dterm} - {{3{yaw_pterm[9]}}, yaw_pterm} - {{yaw_dterm[11]}, yaw_dterm};
-assign lft_spd_unsat  = thrst + 13'h200 - {{3{roll_pterm[9]}}, roll_pterm} - {{roll_dterm[11]}, roll_dterm} + {{3{yaw_pterm[9]}}, yaw_pterm} + {{yaw_dterm[11]}, yaw_dterm};
-assign rght_spd_unsat = thrst + 13'h200 + {{3{roll_pterm[9]}}, roll_pterm} + {{roll_dterm[11]}, roll_dterm} + {{3{yaw_pterm[9]}}, yaw_pterm} + {{yaw_dterm[11]}, yaw_dterm};
+assign frnt_spd_unsat = thrst + 13'h200 - {{3{ptch_pterm[9]}}, ptch_pterm} - {{ptch_dterm_pipe[11]}, ptch_dterm_pipe} - {{3{yaw_pterm[9]}}, yaw_pterm} - {{yaw_dterm_pipe[11]}, yaw_dterm_pipe};
+assign bck_spd_unsat  = thrst + 13'h200 + {{3{ptch_pterm[9]}}, ptch_pterm} + {{ptch_dterm_pipe[11]}, ptch_dterm_pipe} - {{3{yaw_pterm[9]}}, yaw_pterm} - {{yaw_dterm_pipe[11]}, yaw_dterm_pipe};
+assign lft_spd_unsat  = thrst + 13'h200 - {{3{roll_pterm[9]}}, roll_pterm} - {{roll_dterm_pipe[11]}, roll_dterm_pipe} + {{3{yaw_pterm[9]}}, yaw_pterm} + {{yaw_dterm_pipe[11]}, yaw_dterm_pipe};
+assign rght_spd_unsat = thrst + 13'h200 + {{3{roll_pterm[9]}}, roll_pterm} + {{roll_dterm_pipe[11]}, roll_dterm_pipe} + {{3{yaw_pterm[9]}}, yaw_pterm} + {{yaw_dterm_pipe[11]}, yaw_dterm_pipe};
 
 
 // sat speeds

@@ -128,7 +128,7 @@ initial begin
 //SENDING SET THRST CMD//
 /////////////////////////
 	cmd_to_copter = SET_THRST;
-	data = 16'h0050;
+	data = 16'h0080;
 	
 	//sending and resetting command
 	@(posedge clk) send_cmd = 1;
