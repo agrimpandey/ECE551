@@ -14,6 +14,10 @@ reg [7:0] cmd_to_copter;		// command to Copter via wireless link
 reg [15:0] data;				// data associated with command
 reg send_cmd;					// asserted to initiate sending of command (to your CommMaster)
 reg clr_resp_rdy;				// asserted to knock down resp_rdy
+reg [7:0] thrst;
+reg [15:0] d_ptch;
+reg [15:0] d_roll;
+reg [15:0] d_yaw;
 
 /////// declare any localparams here /////
 
@@ -32,7 +36,7 @@ localparam DES_PTCH = 8'h90;
 localparam DES_ROLL = 8'h61;
 localparam DES_YAW = 8'h3B;
 
-wire equal_to_zero;
+reg equal_to_zero;
 
 ////////////////////////////////////////////////////////////////
 // Instantiate Physical Model of Copter with Inertial sensor //
@@ -66,6 +70,8 @@ initial begin
 	RST_n = 1'b0;
 	@(posedge clk) RST_n = 1'b1;
 
+
+
 ///////////////////////
 //SENDING BATTERY CMD//
 ///////////////////////
@@ -79,7 +85,7 @@ initial begin
 	@(posedge resp_rdy);
 	if( resp != 8'h00 ) begin
 		$display("Battery CMD successful. BATT = %h", resp);
-		$stop();
+		//$stop();
 	end
 	else begin
 		$display("ERROR: Battery CMD failed. EXPECTED: Something non-zero. ACTUAL: %h.", resp);
@@ -116,7 +122,7 @@ initial begin
 		$stop();
 	end
 
-	$stop();
+	//$stop();
 
 /////////////////////////
 //SENDING SET THRST CMD//
@@ -138,7 +144,7 @@ initial begin
 		end
 
 		$display("Response was %h.", resp);
-		$stop();
+		//$stop();
 	end
 	else begin
 		$display("ERROR: Response incorrect. EXPECTED: 8'hA5 (POS_ACK). ACTUAL: %h.", resp);
@@ -168,7 +174,7 @@ initial begin
 
 		$display("Response was %h.", resp);
 		$display("Check wave. d_ptch should be %h.", data);
-		$stop();
+		//$stop();
 	end
 	else begin
 		$display("ERROR: Response incorrect. EXPECTED: 8'hA5 (POS_ACK). ACTUAL: %h.", resp);
@@ -198,7 +204,7 @@ initial begin
 
 		$display("Response was %h.", resp);
 		$display("Check wave. d_roll should be %h.", data);
-		$stop();
+		//$stop();
 	end
 	else begin
 		$display("ERROR: Response incorrect. EXPECTED: 8'hA5 (POS_ACK). ACTUAL: %h.", resp);
@@ -226,7 +232,7 @@ initial begin
 
 		$display("Response was %h.", resp);
 		$display("Check wave. d_yaw should be %h.", data);
-		$stop();
+		//$stop();
 	end
 	else begin
 		$display("ERROR: Response incorrect. EXPECTED: 8'hA5 (POS_ACK). ACTUAL: %h.", resp);
@@ -234,31 +240,36 @@ initial begin
 	end
 	
 	
-	repeat(100) begin
-			@(negedge frnt_ESC);	
-		end
+	//repeat(100) begin
+	//		@(negedge frnt_ESC);	
+	//	end
 	$display("Check wave. d_ptch should be around %h. \n d_roll should be around %h. \n d_yaw should be around %h.", DES_PTCH,DES_ROLL,DES_YAW);
-	$stop();
+	//$stop();
 	
 	
 
 
-/*
+
 //////////////////////////////
 //SENDING EMERGENCY LAND CMD//
 //////////////////////////////
+        //thrst = 8'b100;
+        //d_ptch = 16'b1;
+        //d_roll = 16'b1;
+        //d_yaw = 16'b1;
 	cmd_to_copter = EMER_LAND;
-	data = 16'h0013;
+	data = 16'h0000;
 	
 	//sending and resetting command
-	snd_cmd = 1;
+        send_cmd = 1;
 	@(posedge clk) send_cmd = 0;
 	
-	assign equal_to_zero = ((thrst == 0) && (d_ptch == 0) && (d_roll == 0) && (d_yaw == 0));
+	assign equal_to_zero = ((iDUT.iCMD.thrst == 0) && (iDUT.iCMD.d_ptch == 0) && (iDUT.iCMD.d_roll == 0) && (iDUT.iCMD.d_yaw == 0));
 	
 	//Once response is ready, check the response value, and check the result of the command we sent
 	@(posedge resp_rdy)
 	if( resp == POS_ACK ) begin
+          
 		if( equal_to_zero ) begin
 			$display("Response and EMER_LAND successful.");
 		end
@@ -272,18 +283,24 @@ initial begin
 		$stop();
 	end
 
+
 //////////////////////////
 //SENDING MOTORS OFF CMD//
 //////////////////////////
 	cmd_to_copter = MTRS_OFF;
 	data = 16'h5252;
 	
-	send_cmd();
+	
+
+         //sending and resetting command
+	@(posedge clk) send_cmd = 1;
+	@(posedge clk) send_cmd = 0;
+	
 	
 	//Once response is ready, check the response value, and check the result of the command we sent
 	@(posedge resp_rdy)
 	if( resp == POS_ACK ) begin
-		if( motors_off ) begin
+		if( iDUT.iCMD.motors_off ) begin
 			$display("Response and MOTORS_OFF successful.");
 		end
 		else begin
@@ -296,12 +313,12 @@ initial begin
 		$stop();
 	end
 
-*/
 end
+
 
 always
   #10 clk = ~clk;
 
-`include "tb_tasks.v"	// maybe have a separate file with tasks to help with testing
+//include "tb_tasks.v"	// maybe have a separate file with tasks to help with testing
 
-endmodule	
+endmodule
