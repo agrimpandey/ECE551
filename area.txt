@@ -1,0 +1,30 @@
+ 
+****************************************
+Report : area
+Design : QuadCopter
+Version: M-2016.12
+Date   : Sun Dec 10 20:06:14 2017
+****************************************
+
+Library(s) Used:
+
+    tcbn40lpbwptc (File: /cae/apps/data/tsmclibs-2013/digital/Front_End/timing_power_noise/NLDM/tcbn40lpbwp_120b/tcbn40lpbwptc.db)
+
+Number of ports:                           25
+Number of nets:                          9267
+Number of cells:                         9084
+Number of combinational cells:           8065
+Number of sequential cells:              1019
+Number of macros/black boxes:               0
+Number of buf/inv:                       3037
+Number of references:                     310
+
+Combinational area:              12210.937334
+Buf/Inv area:                     2555.506847
+Noncombinational area:            5141.354475
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (Wire load has zero net area)
+
+Total cell area:                 17352.291808
+Total area:                 undefined
+1

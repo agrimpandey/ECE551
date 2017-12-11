@@ -51,7 +51,7 @@ PB_release inst2(.PB(NEXT),
                   .rst_n(rst_n), 
                   .released(next));
 
-rst_synch inst3(.RST_n(RST_n), 
+reset_synch inst3(.RST_n(RST_n), 
                 .clk(clk), 
                 .rst_n(rst_n));
 
@@ -77,7 +77,7 @@ always_comb begin
   strt_cal = 0;
   stat = 0;  
   sel = 0;
-  next_state = CAL;
+  //next_state = CAL;
 
   case(state)
 

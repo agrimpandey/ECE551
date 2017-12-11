@@ -140,7 +140,7 @@ always_ff @(posedge clk) begin
 end
 */
 
-typedef enum reg [3:0] {IDLE, SEND_ACK, BATT, CAL1, CAL2} state_t;
+typedef enum reg [2:0] {IDLE, SEND_ACK, BATT, CAL1, CAL2} state_t;
 state_t state, nxt_state;
 
 always_ff @(posedge clk, negedge rst_n) begin

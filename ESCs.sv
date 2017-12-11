@@ -28,30 +28,30 @@ localparam LFT_OFF  = 10'h220;
 localparam RGHT_OFF = 10'h220;
 
 logic [10:0] frnt_spd_in;
-assign frnt_spd_in = frnt_spd & ~motors_off;
+assign frnt_spd_in = frnt_spd & {11{~motors_off}};
 
 logic [10:0] bck_spd_in;
-assign bck_spd_in  = bck_spd  & ~motors_off;
+assign bck_spd_in  = bck_spd  & {11{~motors_off}};
 
 logic [10:0] lft_spd_in;
-assign lft_spd_in  = lft_spd  & ~motors_off;
+assign lft_spd_in  = lft_spd  & {11{~motors_off}};
 
 logic [10:0] rght_spd_in;
-assign rght_spd_in = rght_spd & ~motors_off;
+assign rght_spd_in = rght_spd & {11{~motors_off}};
 
 
 
 logic [9:0] frnt_off_in;
-assign frnt_off_in = FRNT_OFF & ~motors_off;
+assign frnt_off_in = FRNT_OFF & {10{~motors_off}};
 
 logic [9:0] bck_off_in;
-assign bck_off_in  = BCK_OFF  & ~motors_off;
+assign bck_off_in  = BCK_OFF  & {10{~motors_off}};
 
 logic [9:0] lft_off_in;
-assign lft_off_in = LFT_OFF  & ~motors_off;
+assign lft_off_in = LFT_OFF  & {10{~motors_off}};
 
 logic [9:0] rght_off_in;
-assign rght_off_in = RGHT_OFF & ~motors_off;
+assign rght_off_in = RGHT_OFF & {10{~motors_off}};
 
 
 
