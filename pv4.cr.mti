@@ -1,0 +1,162 @@
+{I:/ECE551/Project v4/SPI_mstr16.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/SPI_mstr16.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module SPI_mstr16
+
+Top level modules:
+	SPI_mstr16
+
+} {} {}} {I:/ECE551/Project v4/A2D_intf_tb.v} {1 {vlog -work work -vopt -stats=none {I:/ECE551/Project v4/A2D_intf_tb.v}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module A2D_intf_tb
+
+Top level modules:
+	A2D_intf_tb
+
+} {} {}} {I:/ECE551/Project v4/inert_intf.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/inert_intf.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module inert_intf
+
+Top level modules:
+	inert_intf
+
+} {} {}} {I:/ECE551/Project v4/ESC_interface.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/ESC_interface.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module ESC_interface
+
+Top level modules:
+	ESC_interface
+
+} {} {}} {I:/ECE551/Project v4/QuadCopter_tb.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/QuadCopter_tb.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module QuadCopter_tb
+
+Top level modules:
+	QuadCopter_tb
+
+} {} {}} {I:/ECE551/Project v4/UART_rcv.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/UART_rcv.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module UART_rcv
+
+Top level modules:
+	UART_rcv
+
+} {} {}} {I:/ECE551/Project v4/ESCs.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/ESCs.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module ESCs
+
+Top level modules:
+	ESCs
+
+} {} {}} {I:/ECE551/Project v4/reset_synch.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/reset_synch.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module reset_synch
+
+Top level modules:
+	reset_synch
+
+} {} {}} {I:/ECE551/Project v4/A2D_Intf.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/A2D_Intf.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module A2D_Intf
+
+Top level modules:
+	A2D_Intf
+
+} {} {}} {I:/ECE551/Project v4/flght_cntrl.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/flght_cntrl.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module flght_cntrl
+
+Top level modules:
+	flght_cntrl
+
+} {} {}} {I:/ECE551/Project v4/CommMaster.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/CommMaster.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module CommMaster
+
+Top level modules:
+	CommMaster
+
+} {} {}} {I:/ECE551/Project v4/UART.v} {1 {vlog -work work -vopt -stats=none {I:/ECE551/Project v4/UART.v}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module UART
+
+Top level modules:
+	UART
+
+} {} {}} {I:/ECE551/Project v4/SPI_ADC128S.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/SPI_ADC128S.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module SPI_ADC128S
+
+Top level modules:
+	SPI_ADC128S
+
+} {} {}} {I:/ECE551/Project v4/inert_intf_test.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/inert_intf_test.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module inert_intf_test
+
+Top level modules:
+	inert_intf_test
+
+} {} {}} {I:/ECE551/Project v4/PB_release.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/PB_release.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module PB_release
+
+Top level modules:
+	PB_release
+
+} {} {}} {I:/ECE551/Project v4/ESC_test.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/ESC_test.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module ESC_test
+
+Top level modules:
+	ESC_test
+
+} {} {}} {I:/ECE551/Project v4/cmd_cfg.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/cmd_cfg.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module cmd_cfg
+
+Top level modules:
+	cmd_cfg
+
+} {} {}} {I:/ECE551/Project v4/UART_tx.v} {1 {vlog -work work -vopt -stats=none {I:/ECE551/Project v4/UART_tx.v}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module UART_tx
+
+Top level modules:
+	UART_tx
+
+} {} {}} {I:/ECE551/Project v4/UART_wrapper.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/UART_wrapper.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module UART_wrapper
+
+Top level modules:
+	UART_wrapper
+
+} {} {}} {I:/ECE551/Project v4/CycloneIV.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/CycloneIV.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module CycloneIV
+
+Top level modules:
+	CycloneIV
+
+} {} {}} {I:/ECE551/Project v4/timer_module.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/timer_module.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module timer_module
+
+Top level modules:
+	timer_module
+
+} {} {}} {I:/ECE551/Project v4/inertial_integrator.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/inertial_integrator.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module inertial_integrator
+
+Top level modules:
+	inertial_integrator
+
+} {} {}} {I:/ECE551/Project v4/ADC128S.sv} {1 {vlog -work work -vopt -sv -stats=none {I:/ECE551/Project v4/ADC128S.sv}
+Model Technology ModelSim SE vlog 10.3c Compiler 2014.07 Jul 19 2014
+-- Compiling module ADC128S
+
+Top level modules:
+	ADC128S
+
+} {} {}}
