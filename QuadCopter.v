@@ -96,7 +96,7 @@ module QuadCopter(clk,RST_n,SS_n,SCLK,MOSI,MISO,INT,RX,TX,LED,FRNT,BCK,LFT,RGHT,
   ////////////////////////////////////////////////////////////
   // Instantiate A2D Interface for reading battery voltage //
   //////////////////////////////////////////////////////////
-  A2D_intf iA2D(.clk(clk),.rst_n(rst_n),.strt_cnv(strt_cnv),.cnv_cmplt(cnv_cmplt),.chnnl(3'b000),
+  A2D_Intf iA2D(.clk(clk),.rst_n(rst_n),.strt_cnv(strt_cnv),.cnv_cmplt(cnv_cmplt),.chnnl(3'b000),
                 .res(batt_level),.SS_n(SS_A2D_n),.SCLK(SCLK_A2D),.MOSI(MOSI_A2D),.MISO(MISO_A2D));
 
   
@@ -104,5 +104,7 @@ module QuadCopter(clk,RST_n,SS_n,SCLK,MOSI,MISO,INT,RX,TX,LED,FRNT,BCK,LFT,RGHT,
   // Instantiate reset synchronizer //
   ///////////////////////////////////  
   reset_synch iRST(.clk(clk),.RST_n(RST_n),.rst_n(rst_n));
+  
+  assign LED[7:0] = 8'b1;
   
 endmodule
